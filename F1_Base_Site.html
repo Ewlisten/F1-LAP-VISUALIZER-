@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>F1 Race Animation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #333;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    #headerContent {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #raceSelector {
+      display: flex;
+      gap: 10px;
+    }
+    #raceSelector select {
+      padding: 5px;
+      background-color: #444;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #raceSelector button {
+      padding: 5px 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #raceSelector button:hover {
+      background-color: #45a049;
+    }
+    #mainContent {
+      display: flex;
+      margin: 20px;
+    }
+    #trackCanvas {
+      width: 75%;
+      height: auto;
+      border: 1px solid black;
+    }
+    aside {
+      width: 20%;
+      padding: 10px;
+      background-color: #f4f4f4;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin: 5px 0;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #telemetryDisplay,
+    #timer,
+    #lapCounter {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div id="headerContent">
+      <h1>F1 Race Animation</h1>
+      <div id="raceSelector">
+        <select id="raceSelect">
+          <option value="Monaco">Monaco</option>
+          <option value="Jeddah">Jeddah</option>
+          <option value="Canada">Canada</option>
+          <option value="Miami">Miami</option>
+        </select>
+        <button onclick="startRace()">Start Race</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content (Canvas and Aside) -->
+  <div id="mainContent">
+    <!-- Canvases for animations-->
+    <canvas id="MonacoCanvas" width="879" height="701"></canvas>
+    <canvas id="JeddahCanvas" width="879" height="701" style="display:none;"></canvas>
+    <canvas id="CanadianCanvas" width="879" height="701" style="display:none;"></canvas>
+    <canvas id="MiamiCanvas" width="879" height="701" style="display:none;"></canvas>
+    
+    
+    <aside>
+      <h2>Lap Info</h2>
+      <div id="telemetryDisplay">Speed: 0 km/h</div>
+      
+      <!-- Driver selection checkboxes -->
+      <div id="driverSelector">
+        <label><input type="checkbox" id="LeclercCheckbox" checked> Leclerc</label><br>
+        <label><input type="checkbox" id="PiastriCheckbox" checked> Piastri</label><br>
+        <label><input type="checkbox" id="StrollCheckbox" checked> Stroll</label><br>
+      </div>
+      
+
+      <!-- ADD ANYTHING YOU WANT IN THIS ASIDE HERE ANY DIV YOU WANT -->
+
+      
+      
+      <button onclick="restartLap()">Restart Lap</button>
+    </aside>
+  </div>
+
+  <script src="F1_Base_Site.js"></script>
+
+</body>
+</html>
