@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
   <title>F1 Race Animation</title>
   <style>
     body {
@@ -15,6 +16,12 @@
       color: white;
       padding: 10px 20px;
       text-align: center;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background-color: #f4f4f4;
+      border: 2px solid limegreen;
     }
     #headerContent {
       display: flex;
@@ -41,6 +48,31 @@
     }
     #raceSelector button:hover {
       background-color: #45a049;
+    }
+    #raceTabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .race-tab {
+      padding: 10px 20px;
+      background-color: #222;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .race-tab:hover {
+      background-color: #333;
+    }
+
+    .race-tab.active {
+      background-color: #e10600; /* Ferrari red */
+      color: white;
+      box-shadow: 0 0 8px #e10600aa;
+      transform: scale(1.05);
     }
     #mainContent {
       display: flex;
@@ -85,6 +117,10 @@
       margin-bottom: 10px;
       font-size: 1.1rem;
     }
+    .gap-span {
+      display: inline-block;
+      width: 10px;
+    }
   </style>
 </head>
 <body>
@@ -94,12 +130,12 @@
     <div id="headerContent">
       <h1>F1 Race Animation</h1>
       <div id="raceSelector">
-        <select id="raceSelect">
-          <option value="Monaco">Monaco</option>
-          <option value="Jeddah">Jeddah</option>
-          <option value="Canada">Canada</option>
-          <option value="Miami">Miami</option>
-        </select>
+        <div id="raceTabs">
+          <button class="race-tab" data-race="Monaco">Monaco</button>
+          <button class="race-tab" data-race="Jeddah">Jeddah</button>
+          <button class="race-tab" data-race="Canada">Canada</button>
+          <button class="race-tab" data-race="Miami">Miami</button>
+        </div>        
         <button onclick="startRace()">Start Race</button>
       </div>
     </div>
@@ -116,20 +152,30 @@
     
     <aside>
       <h2>Lap Info</h2>
-      <div id="telemetryDisplay">Speed: 0 km/h</div>
-      
-      <!-- Driver selection checkboxes -->
+      <div id="telemetryDisplay"></div>
       <div id="driverSelector">
-        <label><input type="checkbox" id="LeclercCheckbox" checked> Leclerc</label><br>
-        <label><input type="checkbox" id="PiastriCheckbox" checked> Piastri</label><br>
-        <label><input type="checkbox" id="StrollCheckbox" checked> Stroll</label><br>
+        <div>
+          <label>
+            <input type="checkbox" id="LeclercCheckbox" checked> Leclerc
+            
+            <span id="LeclercGap" class="gap-span"></span>
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" id="PiastriCheckbox" checked> Piastri
+            
+            <span id="PiastriGap" class="gap-span"></span>
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" id="StrollCheckbox" checked> Stroll
+            
+            <span id="StrollGap" class="gap-span"></span>
+          </label>
+        </div>
       </div>
-      
-
-      <!-- ADD ANYTHING YOU WANT IN THIS ASIDE HERE ANY DIV YOU WANT -->
-
-      
-      
       <button onclick="restartLap()">Restart Lap</button>
     </aside>
   </div>
