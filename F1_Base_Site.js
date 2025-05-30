@@ -3,6 +3,8 @@ let ctx = null;
 const scale = 1;
 let trackPoints = [];
 let animationStartTime = null;
+let selectedRace = [];
+let animationFrameId = null;
 
 const cars = [
   {
@@ -59,8 +61,65 @@ const canvases = {
   Miami: document.getElementById("MiamiCanvas")
 };
 
+const trackFiles = {
+  Monaco: "MONACO_TRACK.json",
+  Jeddah: "Jeddah_TRACK_FIXED.json",
+  Canada: "Canada_Track.json",
+  Miami: "Miami_Track.json"
+};
+
 const carWidth = 30;
 const carHeight = 15;
+
+document.querySelectorAll('.race-tab').forEach(tab => {
+  tab.addEventListener('click', async () => {
+    document.querySelectorAll('.race-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    selectedRace = tab.dataset.race;
+
+    // Cancel existing animation
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+
+    // Reset canvas and state
+    for (let race in canvases) {
+      canvases[race].style.display = race === selectedRace ? 'block' : 'none';
+    }
+    activeCanvas = canvases[selectedRace];
+    ctx = activeCanvas.getContext("2d");
+    ctx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
+
+    // Reset trackPoints and car telemetry
+    trackPoints = [];
+    cars.forEach(car => {
+      car.telemetry = [];
+      car.index = 0;
+    });
+    animationStartTime = null;
+
+    // Load new race assets
+    try {
+      await loadRaceAssets(trackFiles[selectedRace], selectedRace);
+      if (trackPoints.length === 0) {
+        console.error("No track data loaded — cannot animate.");
+        return;
+      }
+
+      // animation start
+      animationFrameId = requestAnimationFrame(animate);
+    } catch (err) {
+      console.error("Error loading race assets:", err);
+    }
+  });
+});
+
+// tab selection
+document.querySelector('.race-tab[data-race="Monaco"]').classList.add('active');
+selectedRace = "Monaco"; // default race
+activeCanvas = canvases.Monaco;
+ctx = activeCanvas.getContext("2d");
 
 async function loadRaceAssets(trackFile, selectedRace) {
   try {
@@ -86,38 +145,24 @@ async function loadRaceAssets(trackFile, selectedRace) {
 }
 
 async function startRace() {
-  const selectedRace = document.getElementById('raceSelect').value;
-
-  // Show only the selected race canvas
-  for (let race in canvases) {
-    canvases[race].style.display = race === selectedRace ? 'block' : 'none';
-  }
-
-  activeCanvas = canvases[selectedRace];
-  ctx = activeCanvas.getContext("2d");
-
-  const trackFiles = {
-    Monaco: "true_track_path.json",
-    Jeddah: "Jeddah_path.json",
-    Canada: "canada_track.json",
-    Miami: "miami_track.json"
-  };
-
   animationStartTime = null;
+
+  if (!document.getElementById("timer")) {
+    const timerDiv = document.createElement("div");
+    timerDiv.id = "timer";
+    timerDiv.textContent = "Time: 0.0s";
+    const aside = document.querySelector("aside");
+    aside.insertBefore(timerDiv, document.getElementById("telemetryDisplay").nextSibling);
+  }
 
   try {
     await loadRaceAssets(trackFiles[selectedRace], selectedRace);
-
     if (trackPoints.length === 0) {
       console.error("No track data loaded — cannot animate.");
       return;
     }
-
-    cars.forEach(car => {
-      car.index = 0;
-    });
-
-    requestAnimationFrame(animate);
+    cars.forEach(car => car.index = 0);
+    animationFrameId = requestAnimationFrame(animate);
   } catch (err) {
     console.error("startRace error:", err);
   }
@@ -130,6 +175,18 @@ function animate(timestamp) {
   ctx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
   drawTrack();
 
+  const telemetryDisplay = document.getElementById('telemetryDisplay');
+  if (telemetryDisplay) telemetryDisplay.innerHTML = "";
+
+  // Update timer
+  const timerElement = document.getElementById("timer");
+  if (timerElement) {
+    timerElement.textContent = `Time: ${elapsedSeconds.toFixed(1)}s`;
+  }
+
+  const carStates = []; // Store visible cars + current time
+
+  
   cars.forEach(car => {
     const checkbox = document.getElementById(car.checkboxId);
     car.visible = checkbox?.checked;
@@ -170,12 +227,29 @@ function animate(timestamp) {
       carWidth,
       carHeight
     );
+    const progress = current.time / totalTime; // 0 to 1
 
-    updateTelemetry(car, current);
+
+    carStates.push({ car, current, time: current.time, progress });
   });
 
-  requestAnimationFrame(animate);
+  // === Phase 2: Determine leader & update telemetry UI ===
+  if (carStates.length > 0) {
+    const leader = carStates.reduce((lead, c) =>
+      c.progress > lead.progress ? c : lead
+    );
+    const leaderTime = leader.time;
+
+
+    carStates.forEach(({ car, current, time }) => {
+      const delta = time - leaderTime;
+      updateTelemetry(car, current, delta);
+    });
+  }
+
+  animationFrameId = requestAnimationFrame(animate);
 }
+
 
 function drawTrack() {
   if (trackPoints.length === 0) return;
@@ -187,14 +261,31 @@ function drawTrack() {
     ctx.lineTo(trackPoints[i].x * scale, trackPoints[i].y * scale);
   }
   ctx.stroke();
+  console.log("First 5 Jeddah track points:", trackPoints.slice(0, 5));
 }
 
-function updateTelemetry(car, telemetryPoint) {
+function updateTelemetry(car, telemetryPoint, delta) {
   const telemetryDisplay = document.getElementById('telemetryDisplay');
-  telemetryDisplay.textContent = `Driver: ${car.name} | Speed: ${telemetryPoint.speed} km/h`;
+  if (!telemetryDisplay) return; // Prevent error if element is missing
+
+  const speed = Math.round(telemetryPoint.speed);
+  const brakePercent = Math.round((telemetryPoint.brake || 0) * 100);
+  const deltaText = delta === 0 ? 'Leader' : `+${delta.toFixed(2)}s`;
+
+  telemetryDisplay.innerHTML += `
+    <div class="telemetry-card">
+      <strong>${car.name}</strong><br>
+      Speed: ${speed} km/h<br>
+      Brake: ${brakePercent}%<br>
+      Gap: ${deltaText}
+    </div>
+  `;
 }
 
 function restartLap() {
   animationStartTime = null;
-  requestAnimationFrame(animate);
+  animationFrameId = requestAnimationFrame(animate);
 }
+
+const telemetryDisplay = document.getElementById('telemetryDisplay');
+if (telemetryDisplay) telemetryDisplay.innerHTML = "";
